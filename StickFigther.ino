@@ -32,26 +32,30 @@ typedef struct {
 
 #define NB_STATE 10
 #define NB_SPRITE_STATE 2
-#define TIME_ATTACK 4
+#define TIME_ATTACK 2
+#define SPEED_RUN 3
+#define GROUND_Y 42
 
 typedef struct {
   uint8_t currentState; // IDL : 0 ,run : 1, kick : 2, punchLeft : 3, punchRight : 4,  duck1 : 5, duck1Kick : 6,jump1 : 7,jumpKick1 : 8 , dead1 : 9
   uint8_t currentSprite;//sprite 1 or 2
-  uint8_t posX,posY;
+  float posX,posY;
   float vx,vy;
   uint8_t height,width;
   animSprite sprites[NB_STATE];
   int8_t life;
+  int8_t oldLife;
   int8_t cadance;//speed of change sprite
   int8_t damage; //damage current punch
   byte dir; //NOFLIP -> and FLIPH <-
-  int8_t timeAttack;
+  int8_t timeAttack,timeNextAttack;
   boolean isJump;
+  byte cptVictory;
 }
 Figther;
 
-Figther Player1 = {0,0,8,29,0,0,13,8,{{idle1,idle2},{run1,run2},{kick1,kick1},{punchLeft1,punchLeft1},{punchRight1,punchRight1},{duck1,duck1},{duckKick1,duckKick1},{jump1,jump1},{jumpKick1,jumpKick1},{dead1,dead1}},100,2,5,NOFLIP,4,false};
-Figther Player2 = {0,0,8,29,0,0,13,8,{{idle1,idle2},{run1,run2},{kick1,kick1},{punchLeft1,punchLeft1},{punchRight1,punchRight1},{duck1,duck1},{duckKick1,duckKick1},{jump1,jump1},{jumpKick1,jumpKick1},{dead1,dead1}},100,2,5,FLIPH,4,false};
+Figther Player1 = {0,0,8,29,0,0,13,8,{{idle1,idle2},{run1,run2},{kick1,kick1},{punchLeft1,punchLeft1},{punchRight1,punchRight1},{duck1,duck1},{duckKick1,duckKick1},{jump1,jump1},{jumpKick1,jumpKick1},{dead1,dead1}},100,100,2,5,NOFLIP,4,8,false,0};
+Figther Player2 = {0,0,8,29,0,0,13,8,{{idle1,idle2},{run1,run2},{kick1,kick1},{punchLeft1,punchLeft1},{punchRight1,punchRight1},{duck1,duck1},{duckKick1,duckKick1},{jump1,jump1},{jumpKick1,jumpKick1},{dead1,dead1}},100,100,2,5,FLIPH,4,8,false,0};
 
 #define CPT_COMBAT_INIT 30
 uint8_t cptCombat = 0;
@@ -67,6 +71,7 @@ void highFigther(Figther * player);
 void bottomFigther(Figther * player);
 void punchFigther(Figther * player);
 void kickFigther(Figther * player);
+void initPlayer(boolean isStartGame);
 
 //101 starship function
 void displayInt(long l, byte Tx, byte Ty, byte fig);

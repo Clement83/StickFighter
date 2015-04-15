@@ -9,7 +9,33 @@ const byte fight[] PROGMEM = {32,12,0xFD,0xF7,0xEF,0xDF,0x85,0x14,0x2B,0x51,0xBD
 const byte timeUp[] PROGMEM = {48,12,0xFB,0xEF,0xDF,0x80,0x7E,0xFC,0x8A,0x28,0x50,0x80,0x5A,0x84,0xDB,0x68,0x57,0x80,0x5A,0xB4,0xDB,0x68,0x57,0x80,0x5A,0xB4,0x51,0x4B,0x57,0x80,0x5A,0x84,0x51,0x4B,0x50,0x80,0x5A,0xBC,0x51,0x4B,0x57,0x80,0x5A,0xBC,0x51,0x4B,0x57,0x80,0x5A,0xA0,0x51,0x4B,0x57,0x80,0x5A,0xA0,0x52,0x2B,0x50,0x80,0x42,0xA0,0x73,0xEF,0xDF,0x80,0x7E,0xE0,0x73,0xEF,0xDF,0x80,0x7E,0xE0,};
 
 
-byte const * tabCpt[4] = {fight,cptBold1,cptBold2,cptBold3}; 
+const byte cpt0[] PROGMEM = {8,5,0xE0,0xA0,0xA0,0xA0,0xE0,};
+const byte cpt1[] PROGMEM = {8,5,0x40,0xC0,0x40,0x40,0xE0,};
+const byte cpt2[] PROGMEM = {8,5,0xE0,0x20,0xE0,0x80,0xE0,};
+const byte cpt3[] PROGMEM = {8,5,0xE0,0x20,0xE0,0x20,0xE0,};
+const byte cpt4[] PROGMEM = {8,5,0xA0,0xA0,0xE0,0x20,0x20,};
+const byte cpt5[] PROGMEM = {8,5,0xE0,0x80,0xE0,0x20,0xE0,};
+const byte cpt6[] PROGMEM = {8,5,0xE0,0x80,0xE0,0xA0,0xE0,};
+const byte cpt7[] PROGMEM = {8,5,0xE0,0x20,0x20,0x20,0x20,};
+const byte cpt8[] PROGMEM = {8,5,0xE0,0xA0,0xE0,0xA0,0xE0,};
+const byte cpt9[] PROGMEM = {8,5,0xE0,0xA0,0xE0,0x20,0x20,};
+
+
+byte const * tabCpt[4]  = {fight,cptBold1,cptBold2,cptBold3}; 
+byte const * tabCptGame[100][2]   = {
+                                  {cpt0,cpt0},{cpt0,cpt1},{cpt0,cpt2},{cpt0,cpt3},{cpt0,cpt4},{cpt0,cpt5},{cpt0,cpt6},{cpt0,cpt7},{cpt0,cpt8},{cpt0,cpt9},
+                                  {cpt1,cpt0},{cpt1,cpt1},{cpt1,cpt2},{cpt1,cpt3},{cpt1,cpt4},{cpt1,cpt5},{cpt1,cpt6},{cpt1,cpt7},{cpt1,cpt8},{cpt1,cpt9},
+                                  {cpt2,cpt0},{cpt2,cpt1},{cpt2,cpt2},{cpt2,cpt3},{cpt2,cpt4},{cpt2,cpt5},{cpt2,cpt6},{cpt2,cpt7},{cpt2,cpt8},{cpt2,cpt9},
+                                  {cpt3,cpt0},{cpt3,cpt1},{cpt3,cpt2},{cpt3,cpt3},{cpt3,cpt4},{cpt3,cpt5},{cpt3,cpt6},{cpt3,cpt7},{cpt3,cpt8},{cpt3,cpt9},
+                                  {cpt4,cpt0},{cpt4,cpt1},{cpt4,cpt2},{cpt4,cpt3},{cpt4,cpt4},{cpt4,cpt5},{cpt4,cpt6},{cpt4,cpt7},{cpt4,cpt8},{cpt4,cpt9},
+                                  {cpt5,cpt0},{cpt5,cpt1},{cpt5,cpt2},{cpt5,cpt3},{cpt5,cpt4},{cpt5,cpt5},{cpt5,cpt6},{cpt5,cpt7},{cpt5,cpt8},{cpt5,cpt9},
+                                  {cpt6,cpt0},{cpt6,cpt1},{cpt6,cpt2},{cpt6,cpt3},{cpt6,cpt4},{cpt6,cpt5},{cpt6,cpt6},{cpt6,cpt7},{cpt6,cpt8},{cpt6,cpt9},
+                                  {cpt7,cpt0},{cpt7,cpt1},{cpt7,cpt2},{cpt7,cpt3},{cpt7,cpt4},{cpt7,cpt5},{cpt7,cpt6},{cpt7,cpt7},{cpt7,cpt8},{cpt7,cpt9},
+                                  {cpt8,cpt0},{cpt8,cpt1},{cpt8,cpt2},{cpt8,cpt3},{cpt8,cpt4},{cpt8,cpt5},{cpt8,cpt6},{cpt8,cpt7},{cpt8,cpt8},{cpt8,cpt9},
+                                  {cpt9,cpt0},{cpt9,cpt1},{cpt9,cpt2},{cpt9,cpt3},{cpt9,cpt4},{cpt9,cpt5},{cpt9,cpt6},{cpt9,cpt7},{cpt9,cpt8},{cpt9,cpt9}
+                               }; 
+
+
 
 unsigned int cptTechArena;
 uint8_t xoffsetCptGras;
@@ -44,12 +70,19 @@ void updateArena()
     cptTechArena = 60;
   }
   
+ 
+  if(Player1.life == 0 ||Player2.life == 0 )
+  {
+    stateFight = 2;
+    cptTechArena = 60;
+  }
+  
   if(stateFight == 1)
   {  
     if(gb.frameCount%20 == 0) cptCombat--;
   }
   
-  if(stateFight == 3)
+  if(stateFight == 3 || stateFight == 2)
   {
     if(cptTechArena >= 30 )
     {
@@ -65,6 +98,7 @@ void updateArena()
 
 void drawArena()
 {
+  //return;
   gb.display.drawBitmap(0,0,arene);
   switch(stateFight)
   {
@@ -76,7 +110,8 @@ void drawArena()
     break;
     case 1 :
        //Fight 
-       displayInt(cptCombat,38,1,2);
+
+       //displayInt(cptCombat,38,1,2);
     break;
     case 2 :
        //Figther KO 
@@ -86,11 +121,14 @@ void drawArena()
        gb.display.drawBitmap(21,18 + yoffsetTimeUp,timeUp);
     break;
   }
+  
+   gb.display.drawBitmap(39,1,tabCptGame[cptCombat][0]);
+   gb.display.drawBitmap(42,1,tabCptGame[cptCombat][1]);
 }
 
 void restartCombat()
 {
-  initPlayer();
+  initPlayer(false);
   initArena();
 }
 
