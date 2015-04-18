@@ -2,7 +2,8 @@
 void updPlayer(Figther * player);
 void drwPlayer(Figther * player);
 void movePlayer(Figther * player);
-void moveIAPlayer(Figther * player);
+void movePlayerSlave();
+void moveIAPlayer(Figther * player,Figther * human);
 void changeBoundPlayer(Figther * player);
 boolean playerIsAttack(Figther player);
 void gestionAttack(Figther * pAttack, Figther * pDef);
@@ -24,6 +25,7 @@ void initPlayer()
 {
   initPlayer(true);
 }
+
 void initPlayer(boolean isStartGame)
 {
   Player1.currentState = 0;
@@ -64,6 +66,14 @@ void initPlayer(boolean isStartGame)
     Player2.cptVictory = 0;
   }
   stopGame = true;
+  
+  //for slave 
+  bt_up = false;
+  bt_down = false;
+  bt_left = false;
+  bt_right = false;
+  bt_a = false;
+  bt_b = false;
 }
 void updatePlayer()
 {
@@ -81,11 +91,11 @@ void updatePlayer()
           //gestion IA
           if(isMaster)
           {
-            moveIAPlayer(&Player2);
+            moveIAPlayer(&Player2,&Player1);
           }
           else 
           {
-            moveIAPlayer(&Player1);
+            moveIAPlayer(&Player1,&Player2);
           }
         }
         if(isMaster)
@@ -94,7 +104,7 @@ void updatePlayer()
         }
         else 
         {
-          movePlayer(&Player2);
+          movePlayerSlave();
         }
     break;
     case 2 :
@@ -115,10 +125,14 @@ void updatePlayer()
            }
          }
          stopGame=false;
-       }
+       } 
+       
+      if(Player1.cptVictory == 3 || Player2.cptVictory == 3 ) 
+      {
+        stateGame = 4;
+      }
     break;
   }
-  
   
   updPlayer(&Player1);
   updPlayer(&Player2);
@@ -152,18 +166,34 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
     byte damage = 0;
     if(pAttack->currentState == 3 || pAttack->currentState == 4)
     {
-      if(gb.collideRectRect(pAttack->posX - 4, pAttack->posY, 16, 5, pDef->posX, pDef->posY, pDef->width, pDef->height))
+      if(gb.collideRectRect(pAttack->posX - 4, pAttack->posY - 14, 16, 5, pDef->posX, (pDef->posY - pDef->height), pDef->width, pDef->height))
       {
-        damage = 10;
+         damage = 5;
       }
     }
     else if(pAttack->currentState == 2 || pAttack->currentState == 8)
     {
-        
+      if(gb.collideRectRect(pAttack->posX - 4, pAttack->posY - 12, 16, 5, pDef->posX, (pDef->posY - pDef->height), pDef->width, pDef->height))
+      {
+        damage = 8;
+      }
     }
     else if(pAttack->currentState == 6)
     {
-      
+      if(gb.collideRectRect(pAttack->posX - 4, pAttack->posY - 5, 16, 5, pDef->posX, (pDef->posY - pDef->height), pDef->width, pDef->height))
+      {
+        damage = 3;
+        if(random(0,2) == 0)
+        {
+          pDef->currentState = 9;
+          changeBoundPlayer(pDef);
+        }
+      }
+    }
+    if(pDef->isDef>0)
+    {
+       pAttack->timeNextAttack += 2;
+      damage = damage/2;
     }
     
     if(damage)
@@ -177,12 +207,28 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
       if(pDef->dir == NOFLIP)
       {
         //Pdef a gauche 
-        pDef->vx = -SPEED_RUN;
+        if(pDef->life > 0)
+        {
+          pDef->vx = -SPEED_RUN;
+        }
+        else 
+        {
+          pDef->vx = -SPEED_RUN*6;
+          pDef->vy = -SPEED_RUN*10;
+        }
       }
       else 
       {
         //Pdef a droite 
-        pDef->vx = SPEED_RUN;
+        if(pDef->life > 0)
+        {
+          pDef->vx = SPEED_RUN;
+        }
+        else 
+        {
+          pDef->vx = SPEED_RUN*6;
+          pDef->vy = -SPEED_RUN*10;
+        }
       }
     }
 }
@@ -203,7 +249,13 @@ void drawPlayer()
   {
     //2 - 7 - 12
     gb.display.fillRect((i*5 + 2) , 8, 2 , 2);
-    
+  }
+  
+  
+  for(byte i=0;i<Player2.cptVictory;i++)
+  {
+    //2 - 7 - 12
+    gb.display.fillRect(80 - (i*5) , 8, 2 , 2);
   }
 }
 
@@ -216,6 +268,7 @@ void drwPlayer(Figther * player)
 {
   gb.display.drawBitmap(((player->dir == NOFLIP)? player->posX : (player->posX -(player->width-8) ) ) ,(player->posY - player->height) , ((player->currentSprite == 0) ? player->sprites[player->currentState].sprite1 : player->sprites[player->currentState].sprite2 ), 0,player->dir);
 }
+
 #define SEUIL_MIN_MOVE 0.1
 void updPlayer(Figther * player)
 {
@@ -235,10 +288,16 @@ void updPlayer(Figther * player)
     player->timeAttack--;
   }
   
+  if(player->isDef>0)
+  {
+    player->isDef--;
+  }
+  
   if(player->life>0)
   {
-    if(player->timeAttack==0 && player->currentState != 0 && player->currentState != 5)
+    if(player->timeAttack==0 && player->currentState != 0 && player->currentState != 5  && player->currentState != 9)
     {
+      // IDL : 0 ,run : 1, kick : 2, punchLeft : 3, punchRight : 4,  duck1 : 5, duck1Kick : 6,jump1 : 7,jumpKick1 : 8 , dead1 : 9
       if(player->currentState == 6)
         player->currentState = 5;
       else if(player->isJump)
@@ -271,8 +330,7 @@ void updPlayer(Figther * player)
   }
   else 
   {
-    
-    if(player->vy<-1)
+    if(player->vy<-1.2)
     {
       player->vy *= 0.9;
       player->posY += player->vy;
@@ -292,6 +350,7 @@ void updPlayer(Figther * player)
       player->isJump = false;
       player->vy = 0;
       player->vx = 0;
+      player->timeAttack = 0;
     }
   }
   
@@ -303,20 +362,41 @@ void updPlayer(Figther * player)
   {
     player->posX = (84 - player->width);
   }
+}
+
+
+
+void movePlayerSlave()
+{
+   if(gb.buttons.repeat(BTN_RIGHT, 1))
+  {
+    bt_right = true;
+  }
+  else if(gb.buttons.repeat(BTN_LEFT, 1))
+  {
+    bt_left = true;
+  }
+  if(gb.buttons.pressed(BTN_UP))
+  {
+    bt_up = true;
+  }
+  else if(gb.buttons.repeat(BTN_DOWN, 1))
+  {
+    bt_down = true;
+  }
   
-  
+  if(gb.buttons.pressed(BTN_A))
+  {
+     bt_a = true;
+  }
+  else if(gb.buttons.pressed(BTN_B))
+  {
+    bt_b = true;
+  }
 }
 
 void movePlayer(Figther * player)
 {
-  if(gb.buttons.pressed(BTN_A))
-  {
-    punchFigther(player);
-  }
-  else if(gb.buttons.pressed(BTN_B))
-  {
-    kickFigther(player);
-  }
   
   if(gb.buttons.repeat(BTN_RIGHT, 1))
   {
@@ -334,18 +414,40 @@ void movePlayer(Figther * player)
   {
     bottomFigther(player);
   }
-}
-
-void moveIAPlayer(Figther * player)
-{
-  if(random(0,100) ==0)
+  
+  if(gb.buttons.pressed(BTN_A))
   {
     punchFigther(player);
   }
-  if(random(0,30) ==0)
+  else if(gb.buttons.pressed(BTN_B))
+  {
+    kickFigther(player);
+  }
+}
+
+void moveIAPlayer(Figther * player,Figther * human)
+{
+  byte rdm = random(0,100);
+  if(rdm <=20)
+  {
+    punchFigther(player);
+  }
+  else if(rdm >65 && rdm <95)
+  {
+    kickFigther(player);
+  }
+  if(rdm <=30)
   {
     if(player->dir == NOFLIP) rightFigther(player);
     else leftFigther(player);
+  }
+  if(rdm >19 && rdm <25)
+  {
+    highFigther(player);
+  }
+  else if(rdm >39 && rdm <45)
+  {
+    bottomFigther(player);
   }
 }
 
@@ -356,13 +458,26 @@ void leftFigther(Figther * player)
     return;
   if(!player->isJump)
   {
-    player->vx =  -SPEED_RUN;
+    
+    if(player->dir == NOFLIP)
+    {
+      //recule
+      player->isDef = TIME_DEF;
+      player->vx =  -SPEED_RUN/2;
+    }
+    else 
+    {
+      //avance
+      player->vx =  -SPEED_RUN;
+    }
+  
     if(!playerIsAttack(*player)) player->currentState = 1;
   }
   else 
   {
     if(player->vx>-SPEED_RUN) player->vx -= 0.1;
   }
+  
     changeBoundPlayer(player);
 }
 
@@ -372,7 +487,17 @@ void rightFigther(Figther * player)
     return;
   if(!player->isJump)
   {
-    player->vx =  SPEED_RUN;
+    if(player->dir == FLIPH)
+    {
+      //recule
+      player->isDef = TIME_DEF;
+      player->vx =  SPEED_RUN/2;
+    }
+    else 
+    {
+      //avance
+      player->vx =  SPEED_RUN;
+    }
     if(!playerIsAttack(*player))player->currentState = 1;
   }
   else 
@@ -409,15 +534,22 @@ void punchFigther(Figther * player)
     return;
   if(player->timeNextAttack>0)
     return;
-  if(!player->isJump)
- {
-  player->currentState = random(3,5);
- }
- else 
- {
-  player->currentState = 8;
- }
-  player->timeAttack = TIME_ATTACK;
+    
+  if(player->currentState == 5)
+  {
+     player->currentState = 6;
+     player->timeAttack = TIME_ATTACK;
+  }
+  else if(!player->isJump)
+  {
+    player->currentState = random(3,5);
+    player->timeAttack = TIME_ATTACK;
+  }
+  else 
+  {
+    player->currentState = 8;
+    player->timeAttack = TIME_ATTACK*4;
+  }
   player->timeNextAttack = TIME_ATTACK+1;
   changeBoundPlayer(player);
 }
@@ -428,9 +560,22 @@ void kickFigther(Figther * player)
     return;
   if(player->timeNextAttack>0)
     return;
+  if(player->currentState == 5)
+ {
+   player->currentState = 6;
+   player->timeAttack = TIME_ATTACK;
+ }
+ else  if(!player->isJump)
+ {
   player->timeAttack = TIME_ATTACK;
-  player->timeNextAttack = TIME_ATTACK+1;
   player->currentState = 2;
+ }
+ else 
+ {
+    player->timeAttack = TIME_ATTACK*4;
+  player->currentState = 2;
+ }
+  player->timeNextAttack = TIME_ATTACK+1;
   changeBoundPlayer(player);
 }
 
