@@ -4,23 +4,26 @@ void setupSlave(){
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
 }
-
+boolean slave_updating;
 ///////////////////////////////////// UPDATE SLAVE
 void updateSlave(){
+  slave_updating = false;
+  //gb.popup(F("Read data SL"),20);
   byte timout = 0;
   isPaused = false;
   while(slave_updated == false){
     //wait for the master's interrupt
     delay(1);
     timout++;
-    if(timout >= 40){
-      gb.popup(F("No master"),2);
+    if(timout >= 300 /*&& !slave_updating*/){
+      gb.popup(F("No master"),20);
       disconnected = true;
       isPaused = true;
       slave_updated = false;
       break;
     }
   }
+  slave_updating = false;
   slave_updated = false;
 }
 
@@ -29,8 +32,8 @@ void updateSlave(){
 // this function is registered as an event, see setup()
 char output[SLAVE_DATA_BUFFER_LENGTH];
 void requestEvent()
-{
-
+{  
+  //gb.popup(F("send data SL"),20);
   //the slave can only answer with one "write" so you have to put all the variables in an string
   output[0] = BT_UP; //identifier
   output[1] = bt_up? '1' : '0';
@@ -92,14 +95,19 @@ void receiveEvent(int howMany)
 {
   while(Wire.available())    // slave may send less than requested
   {
+    slave_updating = true;
     char data_in = Wire.read(); // receive byte per byte
-    byte numLevelTmp;
+    //byte numLevelTmp;
     switch(data_in){
     case GAME_STATE:
       stateGame = Wire.read();
       break;
     case STATE_FIGHT:
       stateFight = Wire.read();
+      //gb.popup(F("stateFight"),20);
+      break;
+    case CPT_TECH_ARENA : 
+      cptTechArena = Wire.read();
       break;
       
     case P1_X:
@@ -126,7 +134,10 @@ void receiveEvent(int howMany)
     case P1_CPT_VICTORY:
       Player1.cptVictory = Wire.read();
       break;
-      
+    case P1_DIR:
+      Player1.dir = Wire.read();
+    break;
+    
     case P2_X:
       Player2.posX = Wire.read();
       break;
@@ -151,11 +162,25 @@ void receiveEvent(int howMany)
     case P2_CPT_VICTORY:
       Player2.cptVictory = Wire.read();
       break;
+    case P2_DIR:
+      Player2.dir = Wire.read();
+    break;
+      
+    case X_OFFSET_CPT_GRAS:
+      xoffsetCptGras = Wire.read();
+      break;
+    case CPT_OFFFSET_TIME_UP:
+      yoffsetTimeUp = Wire.read();
+      break;
+    case CPT_COMBAT:
+      cptCombat = Wire.read();
+      break;
     
     default:
       break;
     }
   }
+  //gb.popup(F("slave upd"),20);
   slave_updated = true;
   disconnected = false;
 }

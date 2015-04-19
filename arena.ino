@@ -39,9 +39,6 @@ byte const * tabCptGame[100][2]   = {
 
 
 
-unsigned int cptTechArena;
-uint8_t xoffsetCptGras;
-uint8_t yoffsetTimeUp;
 
 void initArena()
 {
@@ -92,7 +89,7 @@ void updateArena()
     }
     if(cptTechArena ==0 )
     {
-      restartCombat();
+      stateFight = 4;
     }
   }
 }

@@ -47,15 +47,22 @@ typedef struct {
   byte const * sprite2;
 }animSprite;
 
-#define NB_STATE 10
+#define NB_STATE 11
 #define NB_SPRITE_STATE 2
 #define TIME_ATTACK 2
 #define SPEED_RUN 3
 #define GROUND_Y 42
-#define TIME_DEF 2;
+#define TIME_DEF 2
+#define NB_MOVE_SAVE 4
+#define TIME_LIVE_AYOUKEN 10
+typedef struct {
+  byte posX,posY,timeLive;
+  animSprite sprites;
+}
+Ayouken;
 
 typedef struct {
-  uint8_t currentState; // IDL : 0 ,run : 1, kick : 2, punchLeft : 3, punchRight : 4,  duck1 : 5, duck1Kick : 6,jump1 : 7,jumpKick1 : 8 , dead1 : 9
+  uint8_t currentState; // IDL : 0 ,run : 1, kick : 2, punchLeft : 3, punchRight : 4,  duck1 : 5, duck1Kick : 6,jump1 : 7,jumpKick1 : 8 , dead1 : 9 , 10 Fire
   uint8_t currentSprite;//sprite 1 or 2
   float posX,posY;
   float vx,vy;
@@ -70,21 +77,26 @@ typedef struct {
   boolean isJump;
   byte cptVictory;
   byte isDef;
+  Ayouken ayouken;
+  byte combo[NB_MOVE_SAVE];  
 }
 Figther;
 
-Figther Player1 = {0,0,8,29,0,0,13,8,{{idle1,idle2},{run1,run2},{kick1,kick1},{punchLeft1,punchLeft1},{punchRight1,punchRight1},{duck1,duck1},{duckKick1,duckKick1},{jump1,jump1},{jumpKick1,jumpKick1},{dead1,dead1}},100,100,2,5,NOFLIP,4,8,false,0,0};
-Figther Player2 = {0,0,8,29,0,0,13,8,{{p2idle1,p2idle2},{p2run1,p2run2},{p2kick1,p2kick1},{p2punchLeft1,p2punchLeft1},{p2punchRight1,p2punchRight1},{p2duck1,p2duck1},{p2duckKick1,p2duckKick1},{p2jump1,p2jump1},{p2jumpKick1,p2jumpKick1},{p2dead1,p2dead1}},100,100,2,5,FLIPH,4,8,false,0,0};
+Figther Player1 = {0,0,8,29,0,0,13,8,{{idle1,idle2},{run1,run2},{kick1,kick1},{punchLeft1,punchLeft1},{punchRight1,punchRight1},{duck1,duck1},{duckKick1,duckKick1},{jump1,jump1},{jumpKick1,jumpKick1},{dead1,dead1},{fire1,fire1}},100,100,2,5,NOFLIP,4,8,false,0,0,{0,0,0,fireBall1,fireBall2}};
+Figther Player2 = {0,0,8,29,0,0,13,8,{{p2idle1,p2idle2},{p2run1,p2run2},{p2kick1,p2kick1},{p2punchLeft1,p2punchLeft1},{p2punchRight1,p2punchRight1},{p2duck1,p2duck1},{p2duckKick1,p2duckKick1},{p2jump1,p2jump1},{p2jumpKick1,p2jumpKick1},{p2dead1,p2dead1},{fire1,fire1}},100,100,2,5,FLIPH,4,8,false,0,0,{0,0,0,fireBall1,fireBall2}};
 
 #define CPT_COMBAT_INIT 30
-uint8_t cptCombat = 0;
-uint8_t stateFight;
+byte cptCombat = 0;
+byte stateFight;
 
 boolean isMaster;
 boolean isOnePlayer;
 boolean isPaused;
 boolean disconnected;
 boolean slave_updated = false;
+byte xoffsetCptGras;
+byte yoffsetTimeUp;
+byte cptTechArena;
 
 byte stateGame = 3; //3 main menu, 0 game , 1 multiplayer menu , 2 option , 4 final screen ..... 
 
@@ -95,6 +107,7 @@ void bottomFigther(Figther * player);
 void punchFigther(Figther * player);
 void kickFigther(Figther * player);
 void initPlayer(boolean isStartGame);
+void moveIAPlayer(Figther * player,Figther * human);
 
 /***********************************************
 ************Multiplayer const ******************
@@ -103,6 +116,7 @@ void initPlayer(boolean isStartGame);
 #define I_AM_MASTER 2
 #define GAME_STATE 3
 #define STATE_FIGHT 4
+#define CPT_TECH_ARENA 5
 
 #define P1_X 10
 #define P1_Y 11
@@ -112,6 +126,7 @@ void initPlayer(boolean isStartGame);
 #define P1_W 15
 #define P1_HP 16
 #define P1_CPT_VICTORY 17
+#define P1_DIR 18
 
 #define P2_X 20
 #define P2_Y 21
@@ -121,9 +136,12 @@ void initPlayer(boolean isStartGame);
 #define P2_W 25
 #define P2_HP 26
 #define P2_CPT_VICTORY 27
+#define P2_DIR 28
+
 /*arene*/
 #define X_OFFSET_CPT_GRAS 30
 #define CPT_COMBAT 31
+#define CPT_OFFFSET_TIME_UP 32
 
 /*SLAVE*/
 #define BT_UP 41
@@ -133,7 +151,7 @@ void initPlayer(boolean isStartGame);
 #define BT_A 45
 #define BT_B 46
 
-#define SLAVE_DATA_BUFFER_LENGTH 6
+#define SLAVE_DATA_BUFFER_LENGTH 12
 
 void setup()
 {
@@ -168,6 +186,7 @@ void loop(){
  if(gb.update())
  {
     if(gb.buttons.pressed(BTN_C)){
+      //initGame();
       goTitleScreen();
     }
     if(stateGame == 3)
@@ -179,6 +198,10 @@ void loop(){
     {
       updateFinalScreen();
       drawFinalScreen();
+      if(isMaster && !isOnePlayer)
+      {
+         updateMaster();
+      }
     }
     else if(stateGame == 1)
     {
@@ -189,12 +212,14 @@ void loop(){
           disconnected = false;
           isMaster = true;
           isOnePlayer = false;
+          stateGame = 0;
           break;
         case 1: //Join
           isPaused = false;
           disconnected = false;
           isMaster = false;
           isOnePlayer = false;
+          stateGame = 0;
           break;
         default:
           stateGame = 3;
@@ -203,31 +228,36 @@ void loop(){
     }
     else 
     {
-      if(!isPaused)
+      //gb.popup(F("Is not posed"),20);
+      if(isMaster && !isOnePlayer)
       {
-        if(isMaster && !isOnePlayer)
-        {
-           updateMaster();
-        }
-        else if(!isMaster && !isOnePlayer)
-        {
-          updateSlave();
-        }
-        
-        updateArena();
+         updateMaster();
+      }
+      else if(!isMaster && !isOnePlayer)
+      {
+        updatePlayerSalve();
+        updateSlave();
+      }
+      
+      if(!isPaused || isOnePlayer || !isMaster)
+      {
         
         if(isMaster || isOnePlayer)
         {
           updatePlayer();
-        }
-        
-        drawPlayer();
-        drawArena();
-        
+          updateArena();
+        }  
+   
+       if(isOnePlayer)
+        {
+            moveIAPlayer(&Player2,&Player1);
+        }      
       }
+      drawPlayer();
+      drawArena();
+      gb.display.print(stateFight);
     }
  }
- // gameOverScreen();
 }
 
 

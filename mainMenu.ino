@@ -6,13 +6,17 @@ byte const * tabSpriteMenu[3] = {menuSolo, menuMulti, menuOption} ;
 
 #define INDEX_MAX_ITEM_MENU 2
 byte focusItem;
+byte timeMinAffichageMenu = 2;
 void initMainMenu()
 {
-   focusItem = 0;//0 solo game, 1 multi game , 2 option 
+   focusItem = 0;//0 solo game, 1 multi game , 2 option
+   timeMinAffichageMenu = 2; 
+   
 }
 
 void updateMainMenu()
 {
+  if(timeMinAffichageMenu>0)timeMinAffichageMenu--;
   if(gb.buttons.pressed(BTN_LEFT))
   {
     if(focusItem == 0)
@@ -35,18 +39,22 @@ void updateMainMenu()
       focusItem++;
     }
   }
-  else if(gb.buttons.pressed(BTN_A))
+  else if(gb.buttons.pressed(BTN_A) && timeMinAffichageMenu == 0)
   {
-    
     if(focusItem == 1)
     {
-      isMaster = false; //TODO Multiplayer game 
-      isOnePlayer = false; //TODO Multiplayer game 
+      isMaster = false;  
+      isOnePlayer = false;  
       isPaused = true;
       setupMaster();
       setupSlave();
     }
-    
+    else 
+    {
+      isMaster = false;  
+      isOnePlayer = true;  
+      isPaused = false; 
+    }
     stateGame = focusItem;
   }
 }
