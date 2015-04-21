@@ -43,7 +43,7 @@ void drawFinalScreen()
       gb.display.drawBitmap(12,8,finalScreen);
   }
 
-  if((isMaster && Player1.cptVictory == 3) || (!isMaster && Player2.cptVictory == 3))
+  if(((isMaster|| isOnePlayer ) && Player1.cptVictory == 3) || ( (!isMaster && !isOnePlayer && Player2.cptVictory == 3)))
   {
     gb.display.drawBitmap(10,1,finalScreenWin);
   }

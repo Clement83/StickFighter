@@ -1,5 +1,5 @@
 
-void updPlayer(Figther * player);
+void updPlayer(Figther * player,Figther * other);
 void drwPlayer(Figther * player);
 void movePlayer(Figther * player);
 void movePlayerSlave();
@@ -93,7 +93,10 @@ void updatePlayer()
     break;
     case 1 :
        //Fight
-        movePlayer(&Player1);
+       if(stateGame != 2)
+        {
+          movePlayer(&Player1);
+        }
     break;
     case 2 :
        //Figther KO 
@@ -121,7 +124,16 @@ void updatePlayer()
     //end Player KO screen
       if(Player1.cptVictory == 3 || Player2.cptVictory == 3 ) 
       {
-        stateGame = 4;
+        if(stateGame == 2)
+        {
+          Player1.cptVictory = 0;
+          Player2.cptVictory = 0;
+          restartCombat();
+        }
+        else 
+        {
+          stateGame = 4;
+        }
       }
       else 
       {
@@ -130,8 +142,8 @@ void updatePlayer()
     break;
   }
   
-  updPlayer(&Player1);
-  updPlayer(&Player2);
+  updPlayer(&Player1,&Player2);
+  updPlayer(&Player2,&Player1);
   
   //update dir player 
   if(Player1.posX<Player2.posX)
@@ -161,24 +173,25 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
     // IDL : 0 ,run : 1, kick : 2, punchLeft : 3, punchRight : 4,  duck1 : 5, duck1Kick : 6,jump1 : 7,jumpKick1 : 8 , dead1 : 9
     byte damage = 0;
     if(pAttack->currentState == 3 || pAttack->currentState == 4)
-    {
-      //2 px dist touch
-      if(gb.collideRectRect(pAttack->posX - 2, pAttack->posY - 14, 10, 5, pDef->posX, (pDef->posY - pDef->height), pDef->width, pDef->height))
+    { 
+      //4 px dist touch
+      if(gb.collideRectRect(pAttack->posX - 4, pAttack->posY - 14, 14, 5, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
       {
          damage = 5;
       }
     }
     else if(pAttack->currentState == 2 || pAttack->currentState == 8)
     {
-      //4 px dist touch
-      if(gb.collideRectRect(pAttack->posX - 4, pAttack->posY - 12, 12, 5, pDef->posX, (pDef->posY - pDef->height), pDef->width, pDef->height))
+      //6 px dist touch
+      if(gb.collideRectRect(pAttack->posX - 6, pAttack->posY - 12, 18, 5, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
       {
         damage = 8;
+        pAttack->timeAttack--;
       }
     }
     else if(pAttack->currentState == 6)
     {
-      if(gb.collideRectRect(pAttack->posX - 4, pAttack->posY - 5, 12, 5, pDef->posX, (pDef->posY - pDef->height), pDef->width, pDef->height))
+      if(gb.collideRectRect(pAttack->posX - 6, pAttack->posY - 5, 18, 5, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
       {
         damage = 3;
         if(random(0,2) == 0)
@@ -188,18 +201,20 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
         }
       }
     }
-    if(pDef->isDef>0)
-    {
-       pAttack->timeNextAttack += 2;
-      damage = damage/2;
-    }
     
     if(damage)
     {
+      if(pDef->isDef>0)
+      {
+         pAttack->timeNextAttack += 10;
+        damage = damage/2;
+      }
+      
       pDef->life -= damage;
       if(pDef->life <0)
       {
         pDef->life = 0;
+        playsoundfx(2,0);
       }
       //gestion des colisions
       if(pDef->dir == NOFLIP)
@@ -212,7 +227,7 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
         else 
         {
           pDef->vx = -SPEED_RUN*6;
-          pDef->vy = -SPEED_RUN*10;
+          pDef->vy = -SPEED_RUN*6;
         }
       }
       else 
@@ -225,7 +240,7 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
         else 
         {
           pDef->vx = SPEED_RUN*6;
-          pDef->vy = -SPEED_RUN*10;
+          pDef->vy = -SPEED_RUN*6;
         }
       }
     }
@@ -263,11 +278,11 @@ byte lifeTopixel(byte life)
 
 void drwPlayer(Figther * player)
 {
-  gb.display.drawBitmap(((player->dir == NOFLIP)? player->posX : (player->posX -(player->width-8) ) ) ,(player->posY - player->height) , ((player->currentSprite == 0) ? player->sprites[player->currentState].sprite1 : player->sprites[player->currentState].sprite2 ), 0,player->dir);
+  gb.display.drawBitmap(((player->dir == NOFLIP)? player->posX : (player->posX -(player->width-6) ) ) ,(player->posY - player->height) , ((player->currentSprite == 0) ? player->sprites[player->currentState].sprite1 : player->sprites[player->currentState].sprite2 ), 0,player->dir);
 }
 
 #define SEUIL_MIN_MOVE 0.1
-void updPlayer(Figther * player)
+void updPlayer(Figther * player,Figther * other)
 {
   if(gb.frameCount%player->cadance == 0)
   {
@@ -311,6 +326,11 @@ void updPlayer(Figther * player)
   {
     player->currentState = 9;
     changeBoundPlayer(player);
+  }
+  
+  if( ((player->vx>0 && player->dir == NOFLIP) || (player->vx<0 && player->dir != NOFLIP))  && gb.collideRectRect(player->posX, (player->posY - player->height), 8, player->height, other->posX, (other->posY - other->height), 8, other->height))
+  {
+    player->vx = 0;
   }
   
   if(!player->isJump)
@@ -384,17 +404,18 @@ void movePlayerSlave()
   
   if(gb.buttons.pressed(BTN_A))
   {
+    playsoundfx(1,0);
      bt_a = true;
   }
   else if(gb.buttons.pressed(BTN_B))
   {
+    playsoundfx(0,0);
     bt_b = true;
   }
 }
 
 void movePlayer(Figther * player)
 {
-  
   if(gb.buttons.repeat(BTN_RIGHT, 1))
   {
     rightFigther(player);
@@ -456,7 +477,7 @@ void leftFigther(Figther * player)
 {
   if(player->life==0)
     return;
-  addToCombo(player,3);
+  addToCombo(player,((player->dir == NOFLIP)? 4 : 3));
   if(!player->isJump)
   {
     
@@ -464,10 +485,16 @@ void leftFigther(Figther * player)
     {
       //recule
       player->isDef = TIME_DEF;
+      
+      if(player->timeNextAttack>0)
+        return;
       player->vx =  -SPEED_RUN/2;
     }
     else 
     {
+      
+      if(player->timeNextAttack>0)
+        return;
       //avance
       player->vx =  -SPEED_RUN;
     }
@@ -476,6 +503,9 @@ void leftFigther(Figther * player)
   }
   else 
   {
+    
+    if(player->timeNextAttack>0)
+      return;
     if(player->vx>-SPEED_RUN) player->vx -= 0.1;
   }
   
@@ -486,17 +516,22 @@ void rightFigther(Figther * player)
 {
   if(player->life==0)
     return;
-  addToCombo(player,4);
+  addToCombo(player,((player->dir == NOFLIP)? 3 : 4));
   if(!player->isJump)
   {
     if(player->dir == FLIPH)
     {
       //recule
       player->isDef = TIME_DEF;
+      
+      if(player->timeNextAttack>0)
+        return;
       player->vx =  SPEED_RUN/2;
     }
     else 
     {
+      if(player->timeNextAttack>0)
+        return;
       //avance
       player->vx =  SPEED_RUN;
     }
@@ -504,6 +539,8 @@ void rightFigther(Figther * player)
   }
   else 
   {
+      if(player->timeNextAttack>0)
+        return;
     if(player->vx<SPEED_RUN) player->vx += 0.1;
   }
     changeBoundPlayer(player);
@@ -511,6 +548,8 @@ void rightFigther(Figther * player)
 
 void highFigther(Figther * player)
 {
+  if(player->timeNextAttack>0)
+    return;
   if(player->life==0)
     return;
   addToCombo(player,1);
@@ -527,6 +566,8 @@ void bottomFigther(Figther * player)
 {
   if(player->life==0)
     return;
+  if(player->timeNextAttack>0)
+    return;
   addToCombo(player,2);
   player->currentState = 5;
   changeBoundPlayer(player);
@@ -538,6 +579,7 @@ void punchFigther(Figther * player)
     return;
   if(player->timeNextAttack>0)
     return;
+  playsoundfx(1,0);
  
   addToCombo(player,5);   
   if(player->currentState == 5)
@@ -565,6 +607,7 @@ void kickFigther(Figther * player)
     return;
   if(player->timeNextAttack>0)
     return;
+  playsoundfx(0,0);
   addToCombo(player,6);
   if(player->currentState == 5)
  {
@@ -598,13 +641,15 @@ boolean playerIsAttack(Figther player)
 
 boolean addToCombo(Figther *player, byte moveTouch) // moveTouch : 1=>up, 2=>down, 3=>forward, 4=>backward, 5=>A, 6=>B
 {
+  if(player->combo[0] == moveTouch)
+    return false;
   for(byte i=1;i<NB_MOVE_SAVE;i++)
   {
     player->combo[i] = player->combo[i-1];
   }
   player->combo[0] = moveTouch;
   
-  if(player->combo[0] == 3 && player->combo[1] == 3 )
+  if(player->combo[0] == 5 && player->combo[1] == 3 && player->combo[2] == 2 )
   {
     gb.popup(F("AYOUKEN"),5);
     //test combo et fire ball
@@ -616,5 +661,23 @@ boolean addToCombo(Figther *player, byte moveTouch) // moveTouch : 1=>up, 2=>dow
   return false;
 }
 
+const uint8_t soundfx[3][8] = {
+    {1,14,25,6,1,4,1,12}, // coup de pied
+    {1,42,31,2,1,3,1,22}, // coup de poing
+    {0,24,55,1,0,0,7,7} //mort selon jerom
+};
+
+void playsoundfx(uint8_t fxno, uint8_t channel) {
+    gb.sound.command(0,soundfx[fxno][6],0,channel);
+    // set volume
+    gb.sound.command(1,soundfx[fxno][0],0,channel);
+    // set waveform
+    gb.sound.command(2,soundfx[fxno][5],-soundfx[fxno][4],channel);
+    // set volume slide
+    gb.sound.command(3,soundfx[fxno][3],soundfx[fxno][2]-58,channel);
+    // set pitch slide
+    gb.sound.playNote(soundfx[fxno][1],soundfx[fxno][7],channel);
+    // play note
+}
 
 
