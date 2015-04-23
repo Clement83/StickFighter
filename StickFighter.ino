@@ -51,13 +51,16 @@ typedef struct {
 #define GROUND_Y 42
 #define TIME_DEF 2
 #define NB_MOVE_SAVE 4
-#define TIME_LIVE_AYOUKEN 10
+#define TIME_LIVE_AYOUKEN 15
+#define VITT_AYOUKEN 3
+#define DAMAGE_AYOUKEN 10
 typedef struct {
-  byte posX,posY,timeLive;
+  byte posX,posY,timeLive,dir;
   animSprite sprites;
 }
 Ayouken;
 
+#define TIME_FALL  5
 typedef struct {
   uint8_t currentState; // IDL : 0 ,run : 1, kick : 2, punchLeft : 3, punchRight : 4,  duck1 : 5, duck1Kick : 6,jump1 : 7,jumpKick1 : 8 , dead1 : 9 , 10 Fire
   uint8_t currentSprite;//sprite 1 or 2
@@ -75,12 +78,13 @@ typedef struct {
   byte cptVictory;
   byte isDef;
   Ayouken ayouken;
-  byte combo[NB_MOVE_SAVE];  
+  byte combo[NB_MOVE_SAVE];
+  uint8_t timeFall;  
 }
 Figther;
 
-Figther Player1 = {0,0,8,29,0,0,13,8,{{idle1,idle2},{run1,run2},{kick1,kick1},{punchLeft1,punchLeft1},{punchRight1,punchRight1},{duck1,duck1},{duckKick1,duckKick1},{jump1,jump1},{jumpKick1,jumpKick1},{dead1,dead1},{fire1,fire1}},100,100,2,5,NOFLIP,4,8,false,0,0,{0,0,0,fireBall1,fireBall2}};
-Figther Player2 = {0,0,8,29,0,0,13,8,{{p2idle1,p2idle2},{p2run1,p2run2},{p2kick1,p2kick1},{p2punchLeft1,p2punchLeft1},{p2punchRight1,p2punchRight1},{p2duck1,p2duck1},{p2duckKick1,p2duckKick1},{p2jump1,p2jump1},{p2jumpKick1,p2jumpKick1},{p2dead1,p2dead1},{fire1,fire1}},100,100,2,5,FLIPH,4,8,false,0,0,{0,0,0,fireBall1,fireBall2}};
+Figther Player1 = {0,0,8,29,0,0,13,8,{{idle1,idle2},{run1,run2},{kick1,kick1},{punchLeft1,punchLeft1},{punchRight1,punchRight1},{duck1,duck1},{duckKick1,duckKick1},{jump1,jump1},{jumpKick1,jumpKick1},{dead1,dead1},{fire1,fire1}},100,100,2,5,NOFLIP,4,8,false,0,0,{0,0,0,NOFLIP,fireBall1,fireBall2},0};
+Figther Player2 = {0,0,8,29,0,0,13,8,{{p2idle1,p2idle2},{p2run1,p2run2},{p2kick1,p2kick1},{p2punchLeft1,p2punchLeft1},{p2punchRight1,p2punchRight1},{p2duck1,p2duck1},{p2duckKick1,p2duckKick1},{p2jump1,p2jump1},{p2jumpKick1,p2jumpKick1},{p2dead1,p2dead1},{fire1,fire1}},100,100,2,5,FLIPH,4,8,false,0,0,{0,0,0,FLIPH,fireBall1,fireBall2},0};
 
 #define CPT_COMBAT_INIT 30
 byte cptCombat = 0;

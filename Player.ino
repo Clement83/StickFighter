@@ -175,7 +175,7 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
     if(pAttack->currentState == 3 || pAttack->currentState == 4)
     { 
       //4 px dist touch
-      if(gb.collideRectRect(pAttack->posX - 4, pAttack->posY - 14, 14, 5, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
+      if(gb.collideRectRect(pAttack->posX - 4, pAttack->posY - 14, 14, 3, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
       {
          damage = 5;
       }
@@ -183,24 +183,57 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
     else if(pAttack->currentState == 2 || pAttack->currentState == 8)
     {
       //6 px dist touch
-      if(gb.collideRectRect(pAttack->posX - 6, pAttack->posY - 12, 18, 5, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
+      if(gb.collideRectRect(pAttack->posX - 6, pAttack->posY - 12, 18, 3, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
       {
         damage = 8;
         pAttack->timeAttack--;
+        if(pAttack->currentState == 8)
+        {
+          if(random(0,2) == 0)
+          {
+            pDef->timeFall = TIME_FALL;
+            pDef->currentState = 9;
+            changeBoundPlayer(pDef);
+          }
+        }
       }
     }
     else if(pAttack->currentState == 6)
     {
-      if(gb.collideRectRect(pAttack->posX - 6, pAttack->posY - 5, 18, 5, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
+      if(gb.collideRectRect(pAttack->posX - 6, pAttack->posY - 3, 18, 3, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
       {
         damage = 3;
         if(random(0,2) == 0)
         {
           pDef->currentState = 9;
+          pDef->timeFall = TIME_FALL;
           changeBoundPlayer(pDef);
         }
       }
     }
+    
+   if(pAttack->ayouken.timeLive > 0)
+   {
+      if(gb.collideRectRect(pAttack->ayouken.posX, pAttack->ayouken.posY, 6, 6, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
+      {
+        damage = DAMAGE_AYOUKEN;
+        if(pAttack->ayouken.timeLive>0)
+        {
+          (&pAttack->ayouken)->timeLive -= (pAttack->ayouken.timeLive>2)? 2 : 1; 
+        }
+      }
+      if(pDef->ayouken.timeLive > 0)
+      {
+        if(gb.collideRectRect(pAttack->ayouken.posX, pAttack->ayouken.posY, 6, 6, pDef->ayouken.posX, pDef->ayouken.posY, 6, 6))
+        {
+          if(pAttack->ayouken.timeLive>0)
+          {
+            (&pAttack->ayouken)->timeLive -= (pAttack->ayouken.timeLive>2)? 2 : 1; 
+            (&pDef->ayouken)->timeLive -= (pDef->ayouken.timeLive>2)? 2 : 1; 
+          }
+        }
+      }
+   }
     
     if(damage)
     {
@@ -278,6 +311,11 @@ byte lifeTopixel(byte life)
 
 void drwPlayer(Figther * player)
 {
+   if(player->ayouken.timeLive > 0)
+  {
+    gb.display.drawBitmap(player->ayouken.posX,player->ayouken.posY,(player->ayouken.timeLive>(TIME_LIVE_AYOUKEN/3))? player->ayouken.sprites.sprite1 : player->ayouken.sprites.sprite2,0,player->ayouken.dir );
+  }
+  
   gb.display.drawBitmap(((player->dir == NOFLIP)? player->posX : (player->posX -(player->width-6) ) ) ,(player->posY - player->height) , ((player->currentSprite == 0) ? player->sprites[player->currentState].sprite1 : player->sprites[player->currentState].sprite2 ), 0,player->dir);
 }
 
@@ -294,7 +332,16 @@ void updPlayer(Figther * player,Figther * other)
   {
     player->timeNextAttack--;
   }
+  if(player->timeFall>0)
+  {
+    player->timeFall--;
+  }
   
+  if(player->ayouken.timeLive > 0)
+  {
+    (&player->ayouken)->posX += (player->ayouken.dir == NOFLIP)? VITT_AYOUKEN : -VITT_AYOUKEN;
+    (&player->ayouken)->timeLive--;
+  }
   if(player->timeAttack>0)
   {
     player->timeAttack--;
@@ -307,7 +354,7 @@ void updPlayer(Figther * player,Figther * other)
   
   if(player->life>0)
   {
-    if(player->timeAttack==0 && player->currentState != 0 && player->currentState != 5  && player->currentState != 9)
+    if(player->timeAttack==0 && player->currentState != 0 && player->currentState != 5  && player->currentState != 9 && player->timeFall ==0)
     {
       // IDL : 0 ,run : 1, kick : 2, punchLeft : 3, punchRight : 4,  duck1 : 5, duck1Kick : 6,jump1 : 7,jumpKick1 : 8 , dead1 : 9
       if(player->currentState == 6)
@@ -445,10 +492,24 @@ void movePlayer(Figther * player)
 
 void moveIAPlayer(Figther * player,Figther * human)
 {
+  //return;
   if(stateFight == 1)
   {
+    byte isFireBall = 0;
+    byte isCrunch = 0;
+    byte fuiteStrategique = 0;
+    if(human->currentState == 5 || human->currentState == 6)
+    {
+      isCrunch = 5;
+    }
+    int8_t diffLife = player->life - human->life;
+    if(human->ayouken.timeLive>0)
+    {
+      isFireBall = 5;
+    }
+    
     byte rdm = random(0,100);
-    if(rdm <=20)
+    if(rdm <=(20 - isCrunch + diffLife))
     {
       punchFigther(player);
     }
@@ -456,18 +517,36 @@ void moveIAPlayer(Figther * player,Figther * human)
     {
       kickFigther(player);
     }
-    if(rdm <=30)
+    if(isCrunch>0 && diffLife>0)
+    {
+      fuiteStrategique = 10;
+    }
+    
+    if(rdm >(90-fuiteStrategique+diffLife ))
+    {
+      //backward
+      if(player->dir != NOFLIP) rightFigther(player);
+      else leftFigther(player);
+    }
+    else if(rdm <=(40+isCrunch+diffLife-fuiteStrategique))
     {
       if(player->dir == NOFLIP) rightFigther(player);
       else leftFigther(player);
     }
-    if(rdm >19 && rdm <25)
+    if(rdm >19 && rdm <25 + isFireBall)
     {
       highFigther(player);
     }
-    else if(rdm >39 && rdm <45)
+    else if(rdm >(39-isCrunch+diffLife) && rdm <45)
     {
       bottomFigther(player);
+    }
+    else if(rdm >45 && rdm <(48 + isCrunch + fuiteStrategique - diffLife + isFireBall))
+    {
+      bottomFigther(player);
+      if(player->dir == NOFLIP) rightFigther(player);
+      else leftFigther(player);
+      punchFigther(player);
     }
   }
 }
@@ -636,25 +715,29 @@ void changeBoundPlayer(Figther * player)
 
 boolean playerIsAttack(Figther player)
 {
-  return player.timeAttack>0;
+  return (player.timeAttack>0 || player.ayouken.timeLive > 0);
 }
 
 boolean addToCombo(Figther *player, byte moveTouch) // moveTouch : 1=>up, 2=>down, 3=>forward, 4=>backward, 5=>A, 6=>B
 {
   if(player->combo[0] == moveTouch)
     return false;
-  for(byte i=1;i<NB_MOVE_SAVE;i++)
+  for(byte i=(NB_MOVE_SAVE-1);i>0;i--)
   {
     player->combo[i] = player->combo[i-1];
   }
   player->combo[0] = moveTouch;
   
-  if(player->combo[0] == 5 && player->combo[1] == 3 && player->combo[2] == 2 )
+  if(player->ayouken.timeLive == 0 && player->combo[0] == 5 && player->combo[1] == 3 && player->combo[2] == 2 )
   {
-    gb.popup(F("AYOUKEN"),5);
+    //gb.popup(F("AYOUKEN"),5);
     //test combo et fire ball
-    //player->currentState = 10;
-    //TIME_LIVE_AYOUKEN;
+    player->currentState = 10;
+    (&player->ayouken)->timeLive = TIME_LIVE_AYOUKEN;
+    (&player->ayouken)->posX = player->posX;
+    (&player->ayouken)->posY = (player->posY - 8);
+    (&player->ayouken)->dir = player->dir;
+    player->timeNextAttack = TIME_ATTACK+5; //fire ball are very slow
     return true;
   }
   

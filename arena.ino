@@ -11,32 +11,7 @@ const byte p1ko[] PROGMEM = {40,12,0xF0,0x30,0x7,0xEF,0xC0,0x88,0x50,0x5,0xA8,0x
 const byte p2ko[] PROGMEM = {40,12,0xF1,0xF8,0x7,0xEF,0xC0,0x89,0x8,0x5,0xA8,0x40,0xB5,0xE8,0x5,0xAB,0x40,0xB5,0xE8,0x5,0xAB,0x40,0xB5,0xE8,0x5,0xAB,0x40,0x8D,0x8,0x4,0x6B,0x40,0xB9,0x78,0x5,0xAB,0x40,0xB1,0x78,0x5,0xAB,0x40,0xA1,0x78,0x5,0xAB,0x40,0xA1,0x8,0x5,0xA8,0x40,0xE1,0xF8,0x7,0xEF,0xC0,0xE1,0xF8,0x7,0xEF,0xC0,};
 
 
-const byte cpt0[] PROGMEM = {8,5,0xE0,0xA0,0xA0,0xA0,0xE0,};
-const byte cpt1[] PROGMEM = {8,5,0x40,0xC0,0x40,0x40,0xE0,};
-const byte cpt2[] PROGMEM = {8,5,0xE0,0x20,0xE0,0x80,0xE0,};
-const byte cpt3[] PROGMEM = {8,5,0xE0,0x20,0xE0,0x20,0xE0,};
-const byte cpt4[] PROGMEM = {8,5,0xA0,0xA0,0xE0,0x20,0x20,};
-const byte cpt5[] PROGMEM = {8,5,0xE0,0x80,0xE0,0x20,0xE0,};
-const byte cpt6[] PROGMEM = {8,5,0xE0,0x80,0xE0,0xA0,0xE0,};
-const byte cpt7[] PROGMEM = {8,5,0xE0,0x20,0x20,0x20,0x20,};
-const byte cpt8[] PROGMEM = {8,5,0xE0,0xA0,0xE0,0xA0,0xE0,};
-const byte cpt9[] PROGMEM = {8,5,0xE0,0xA0,0xE0,0x20,0x20,};
-
-
 byte const * tabCpt[4]  = {fight,cptBold1,cptBold2,cptBold3}; 
-byte const * tabCptGame[100][2]   = {
-                                  {cpt0,cpt0},{cpt0,cpt1},{cpt0,cpt2},{cpt0,cpt3},{cpt0,cpt4},{cpt0,cpt5},{cpt0,cpt6},{cpt0,cpt7},{cpt0,cpt8},{cpt0,cpt9},
-                                  {cpt1,cpt0},{cpt1,cpt1},{cpt1,cpt2},{cpt1,cpt3},{cpt1,cpt4},{cpt1,cpt5},{cpt1,cpt6},{cpt1,cpt7},{cpt1,cpt8},{cpt1,cpt9},
-                                  {cpt2,cpt0},{cpt2,cpt1},{cpt2,cpt2},{cpt2,cpt3},{cpt2,cpt4},{cpt2,cpt5},{cpt2,cpt6},{cpt2,cpt7},{cpt2,cpt8},{cpt2,cpt9},
-                                  {cpt3,cpt0},{cpt3,cpt1},{cpt3,cpt2},{cpt3,cpt3},{cpt3,cpt4},{cpt3,cpt5},{cpt3,cpt6},{cpt3,cpt7},{cpt3,cpt8},{cpt3,cpt9},
-                                  {cpt4,cpt0},{cpt4,cpt1},{cpt4,cpt2},{cpt4,cpt3},{cpt4,cpt4},{cpt4,cpt5},{cpt4,cpt6},{cpt4,cpt7},{cpt4,cpt8},{cpt4,cpt9},
-                                  {cpt5,cpt0},{cpt5,cpt1},{cpt5,cpt2},{cpt5,cpt3},{cpt5,cpt4},{cpt5,cpt5},{cpt5,cpt6},{cpt5,cpt7},{cpt5,cpt8},{cpt5,cpt9},
-                                  {cpt6,cpt0},{cpt6,cpt1},{cpt6,cpt2},{cpt6,cpt3},{cpt6,cpt4},{cpt6,cpt5},{cpt6,cpt6},{cpt6,cpt7},{cpt6,cpt8},{cpt6,cpt9},
-                                  {cpt7,cpt0},{cpt7,cpt1},{cpt7,cpt2},{cpt7,cpt3},{cpt7,cpt4},{cpt7,cpt5},{cpt7,cpt6},{cpt7,cpt7},{cpt7,cpt8},{cpt7,cpt9},
-                                  {cpt8,cpt0},{cpt8,cpt1},{cpt8,cpt2},{cpt8,cpt3},{cpt8,cpt4},{cpt8,cpt5},{cpt8,cpt6},{cpt8,cpt7},{cpt8,cpt8},{cpt8,cpt9},
-                                  {cpt9,cpt0},{cpt9,cpt1},{cpt9,cpt2},{cpt9,cpt3},{cpt9,cpt4},{cpt9,cpt5},{cpt9,cpt6},{cpt9,cpt7},{cpt9,cpt8},{cpt9,cpt9}
-                               }; 
-
 
 
 
@@ -125,8 +100,14 @@ void drawArena()
     break;
   }
   
-   gb.display.drawBitmap(39,1,tabCptGame[cptCombat][0]);
-   gb.display.drawBitmap(42,1,tabCptGame[cptCombat][1]);
+  byte dizaine = cptCombat/10;
+  byte unite =  cptCombat - (dizaine*10);
+  
+  gb.display.cursorX = 39;
+  gb.display.cursorY = 1;
+  gb.display.print(dizaine);
+  gb.display.cursorX = 42;
+  gb.display.print(unite);
 }
 
 void restartCombat()
