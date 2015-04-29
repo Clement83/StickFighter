@@ -182,8 +182,13 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
     }
     else if(pAttack->currentState == 2 || pAttack->currentState == 8)
     {
+      byte offsetY = 12;
+      if(pattack->isJump)
+      {
+        offsetY = 0;
+      }
       //6 px dist touch
-      if(gb.collideRectRect(pAttack->posX - 6, pAttack->posY - 12, 18, 3, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
+      if(gb.collideRectRect(pAttack->posX - 6, pAttack->posY - offsetY, 18, 3, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
       {
         damage = 8;
         pAttack->timeAttack--;
