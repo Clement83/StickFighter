@@ -159,7 +159,7 @@ void setup()
   gb.begin();
   goTitleScreen();
 }
-
+byte diffculty = 15;//incrase for dificulte IA
 void initGame()
 {
   gb.battery.show = false;

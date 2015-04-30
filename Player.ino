@@ -7,6 +7,7 @@ void changeBoundPlayer(Figther * player);
 boolean playerIsAttack(Figther player);
 void gestionAttack(Figther * pAttack, Figther * pDef);
 boolean addToCombo(Figther *player, byte moveTouch);
+void playerFall(byte chance,Figther *pDef);
 
 boolean stopGame=false;
 
@@ -194,12 +195,7 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
         pAttack->timeAttack--;
         if(pAttack->currentState == 8)
         {
-          if(random(0,2) == 0)
-          {
-            pDef->timeFall = TIME_FALL;
-            pDef->currentState = 9;
-            changeBoundPlayer(pDef);
-          }
+          playerFall(2,pDef);
         }
       }
     }
@@ -208,12 +204,7 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
       if(gb.collideRectRect(pAttack->posX - 6, pAttack->posY - 3, 18, 3, pDef->posX, (pDef->posY - pDef->height), 6, pDef->height))
       {
         damage = 3;
-        if(random(0,2) == 0)
-        {
-          pDef->currentState = 9;
-          pDef->timeFall = TIME_FALL;
-          changeBoundPlayer(pDef);
-        }
+        playerFall(2,pDef);
       }
     }
     
@@ -226,6 +217,7 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
         {
           (&pAttack->ayouken)->timeLive -= (pAttack->ayouken.timeLive>2)? 2 : 1; 
         }
+        playerFall(3,pDef);
       }
       if(pDef->ayouken.timeLive > 0)
       {
@@ -282,6 +274,16 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
         }
       }
     }
+}
+
+void playerFall(byte chance,Figther *pDef)
+{
+  if(random(0,chance) == 0)
+  {
+    pDef->currentState = 9;
+    pDef->timeFall = TIME_FALL;
+    changeBoundPlayer(pDef);
+  }
 }
 
 void drawPlayer()
@@ -503,7 +505,10 @@ void moveIAPlayer(Figther * player,Figther * human)
     byte isFireBall = 0;
     byte isCrunch = 0;
     byte fuiteStrategique = 0;
-    if(human->currentState == 5 || human->currentState == 6)
+    byte dist = abs(player->posX - human->posX);
+    
+    //Brain storming
+    if(human->currentState == 5 || human->currentState == 6 || human->currentState == 9)
     {
       isCrunch = 5;
     }
@@ -512,28 +517,38 @@ void moveIAPlayer(Figther * player,Figther * human)
     {
       isFireBall = 5;
     }
-    
-    byte rdm = random(0,100);
-    if(rdm <=(20 - isCrunch + diffLife))
-    {
-      punchFigther(player);
-    }
-    else if(rdm >65 && rdm <95)
-    {
-      kickFigther(player);
-    }
     if(isCrunch>0 && diffLife>0)
     {
       fuiteStrategique = 10;
     }
     
-    if(rdm >(90-fuiteStrategique+diffLife ))
+    byte rdm = random(0,100);
+    
+    //Attack ?
+    if(rdm <=(20 - isCrunch + diffLife - dist))
+    {
+      punchFigther(player);
+    }
+    else if(rdm >65 && rdm <90 - dist +diffculty)
+    {
+      kickFigther(player);
+    }
+    else if(rdm >45 && rdm <(48 + isCrunch + fuiteStrategique - diffLife + isFireBall))
+    {
+      bottomFigther(player);
+      if(player->dir == NOFLIP) rightFigther(player);
+      else leftFigther(player);
+      punchFigther(player);
+    }
+    
+    //Move
+    if(rdm >(95-fuiteStrategique+diffLife -diffculty ))
     {
       //backward
       if(player->dir != NOFLIP) rightFigther(player);
       else leftFigther(player);
     }
-    else if(rdm <=(40+isCrunch+diffLife-fuiteStrategique))
+    else if(rdm <=(40+isCrunch+diffLife-fuiteStrategique+diffculty))
     {
       if(player->dir == NOFLIP) rightFigther(player);
       else leftFigther(player);
@@ -542,16 +557,9 @@ void moveIAPlayer(Figther * player,Figther * human)
     {
       highFigther(player);
     }
-    else if(rdm >(39-isCrunch+diffLife) && rdm <45)
+    else if(rdm >(39-isCrunch+diffLife) && rdm <45+isCrunch)
     {
       bottomFigther(player);
-    }
-    else if(rdm >45 && rdm <(48 + isCrunch + fuiteStrategique - diffLife + isFireBall))
-    {
-      bottomFigther(player);
-      if(player->dir == NOFLIP) rightFigther(player);
-      else leftFigther(player);
-      punchFigther(player);
     }
   }
 }
@@ -561,7 +569,8 @@ void leftFigther(Figther * player)
 {
   if(player->life==0)
     return;
-  addToCombo(player,((player->dir == NOFLIP)? 4 : 3));
+  if(addToCombo(player,((player->dir == NOFLIP)? 4 : 3)))
+    return;
   if(!player->isJump)
   {
     
@@ -600,7 +609,8 @@ void rightFigther(Figther * player)
 {
   if(player->life==0)
     return;
-  addToCombo(player,((player->dir == NOFLIP)? 3 : 4));
+  if(addToCombo(player,((player->dir == NOFLIP)? 3 : 4)))
+    return;
   if(!player->isJump)
   {
     if(player->dir == FLIPH)
@@ -636,7 +646,8 @@ void highFigther(Figther * player)
     return;
   if(player->life==0)
     return;
-  addToCombo(player,1);
+  if(addToCombo(player,1))
+    return;
  if(!player->isJump)
  {
     player->currentState = 7;
@@ -652,7 +663,8 @@ void bottomFigther(Figther * player)
     return;
   if(player->timeNextAttack>0)
     return;
-  addToCombo(player,2);
+  if(addToCombo(player,2))
+    return;
   player->currentState = 5;
   changeBoundPlayer(player);
 }
@@ -665,7 +677,8 @@ void punchFigther(Figther * player)
     return;
   playsoundfx(1,0);
  
-  addToCombo(player,5);   
+  if(addToCombo(player,5))
+    return;
   if(player->currentState == 5)
   {
      player->currentState = 6;
@@ -692,7 +705,8 @@ void kickFigther(Figther * player)
   if(player->timeNextAttack>0)
     return;
   playsoundfx(0,0);
-  addToCombo(player,6);
+  if(addToCombo(player,6))
+    return;
   if(player->currentState == 5)
  {
    player->currentState = 6;
