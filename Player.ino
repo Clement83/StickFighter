@@ -184,7 +184,7 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
     else if(pAttack->currentState == 2 || pAttack->currentState == 8)
     {
       byte offsetY = 12;
-      if(pattack->isJump)
+      if(pAttack->isJump)
       {
         offsetY = 0;
       }
