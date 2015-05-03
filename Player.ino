@@ -764,8 +764,8 @@ boolean addToCombo(Figther *player, byte moveTouch) // moveTouch : 1=>up, 2=>dow
 }
 
 const uint8_t soundfx[3][8] = {
-    {1,14,25,6,1,4,1,12}, // coup de pied
-    {1,42,31,2,1,3,1,22}, // coup de poing
+    {0,22,54,1,7,0,7,10}, // coup de pied {1,14,25,6,1,4,1,12}
+    {0,22,48,1,7,5,7,10}, // coup de poing{1,42,31,2,1,3,1,22}
     {0,24,55,1,0,0,7,7} //mort selon jerom
 };
 

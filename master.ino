@@ -137,4 +137,29 @@ void masterWrite(){
   
   //gb.popup(F("end send MA"),10);
   Wire.endTransmission();    // stop transmitting
+  
+  
+  /* FIREBALL */
+
+Wire.beginTransmission(2); // transmit to device #2
+Wire.write(P1_AY_POSX); //identifier
+Wire.write((byte)Player1.ayouken.posX); //identifier
+Wire.write(P1_AY_POSY); //identifier
+Wire.write((byte)Player1.ayouken.posY); //identifier
+Wire.write(P1_AY_TTL); //identifier
+Wire.write((byte)Player1.ayouken.timeLive); //identifier
+Wire.write(P1_AY_DIR); //identifier
+Wire.write((byte)Player1.ayouken.dir); //identifier
+
+Wire.write(P2_AY_POSX); //identifier
+Wire.write((byte)Player2.ayouken.posX); //identifier
+Wire.write(P2_AY_POSY); //identifier
+Wire.write((byte)Player2.ayouken.posY); //identifier
+Wire.write(P2_AY_TTL); //identifier
+Wire.write((byte)Player2.ayouken.timeLive); //identifier
+Wire.write(P2_AY_DIR); //identifier
+Wire.write((byte)Player2.ayouken.dir); //identifier
+//gb.popup(F("end send MA"),10);
+Wire.endTransmission();    // stop transmitting
+  
 }

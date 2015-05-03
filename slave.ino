@@ -176,6 +176,33 @@ void receiveEvent(int howMany)
       cptCombat = Wire.read();
       break;
     
+    
+   case P1_AY_POSX : 
+     (&Player1)->ayouken.posX = Wire.read();
+   break;
+   case P1_AY_POSY : 
+     (&Player1)->ayouken.posY = Wire.read();
+   break;
+   case P1_AY_TTL : 
+     (&Player1)->ayouken.timeLive = Wire.read();
+   break;
+   case P1_AY_DIR : 
+     (&Player1)->ayouken.dir = Wire.read();
+   break;
+   
+   case P2_AY_POSX : 
+     (&Player2)->ayouken.posX = Wire.read();
+   break;
+   case P2_AY_POSY : 
+     (&Player2)->ayouken.posY = Wire.read();
+   break;
+   case P2_AY_TTL : 
+     (&Player2)->ayouken.timeLive = Wire.read();
+   break;
+   case P2_AY_DIR : 
+     (&Player2)->ayouken.dir = Wire.read();
+   break;
+   
     default:
       break;
     }

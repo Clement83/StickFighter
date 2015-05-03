@@ -152,6 +152,19 @@ void moveIAPlayer(Figther * player,Figther * human);
 #define BT_A 45
 #define BT_B 46
 
+/*Ayouken */
+//posX,posY,timeLive,dir
+#define P1_AY_POSX 51
+#define P1_AY_POSY 52
+#define P1_AY_TTL 53
+#define P1_AY_DIR 54
+
+#define P2_AY_POSX 61
+#define P2_AY_POSY 62
+#define P2_AY_TTL 63
+#define P2_AY_DIR 64
+
+
 #define SLAVE_DATA_BUFFER_LENGTH 12
 
 void setup()
