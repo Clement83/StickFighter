@@ -38,7 +38,6 @@ const byte fireBall2[] PROGMEM = {8,6,0x38,0xC4,0xB4,0xB4,0xC4,0x38,};
 /* fake button for slave*/
 boolean bt_up,bt_down,bt_left,bt_right,bt_a,bt_b;
 
-
 typedef struct {
   byte const * sprite1;
   byte const * sprite2;
