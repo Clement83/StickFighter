@@ -1,3 +1,10 @@
+/*****************
+* 2015
+* Gamebuino fighting Game
+* Code by Clement
+* Art By Quirby64
+****************/
+
 #include <SPI.h>
 #include <Gamebuino.h>
 Gamebuino gb;
