@@ -234,6 +234,9 @@ void gestionAttack(Figther * pAttack, Figther * pDef)
     
     if(damage)
     {
+      //TODO gestion de la direction de l'effet
+      //Player1.dir = NOFLIP;
+      partCreate(pDef->posX, pDef->posY-10, 10,10,5);
       if(pDef->isDef>0)
       {
          pAttack->timeNextAttack += 10;

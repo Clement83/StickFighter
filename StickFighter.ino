@@ -192,6 +192,7 @@ void initGame()
   initPlayer();
   initArena();
   initFinalScreen();
+  partInit();
 }
 
 const char strMaster[] PROGMEM = "Host (master)";
@@ -282,8 +283,11 @@ void loop(){
             moveIAPlayer(&Player2,&Player1);
         }      
       }
+      partUpdate();
+      
       drawPlayer();
       drawArena();
+      partDraw(gb, 0, 0);
       //gb.display.print(stateFight);
     }
  }
